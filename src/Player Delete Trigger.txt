@@ -1,0 +1,26 @@
+DELIMITER $$
+
+CREATE TRIGGER before_player_delete
+BEFORE DELETE ON player
+FOR EACH ROW
+BEGIN
+    -- Delete corresponding player talents
+    DELETE FROM player_talents WHERE player_talents.playerId = OLD.id;
+    
+    -- Delete corresponding weapons
+    DELETE FROM weapon WHERE weapon.playerId = OLD.id;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER after_player_delete
+AFTER DELETE ON player
+FOR EACH ROW
+BEGIN
+    -- Delete corresponding stats
+    DELETE FROM stats WHERE id = OLD.statsId;
+END$$
+
+DELIMITER ;
