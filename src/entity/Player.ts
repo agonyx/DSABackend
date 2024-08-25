@@ -39,4 +39,6 @@ export class Player {
     })
     selected: string;
     
+    @Column({nullable: true})
+    avatar: string;
 }

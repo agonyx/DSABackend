@@ -25,6 +25,12 @@ export const playerRepositoryMethods = {
             }
         );
     },
+    async getAllPlayersByDiscordId(discordId: string) {
+        return await playerRepository.find({
+            relations: ["stats", "talents", "weapons","items"],
+            where: { discordId: discordId },
+        });
+    },
     async createPlayer(player: Player) {
         return await playerRepository.save(player);
     },

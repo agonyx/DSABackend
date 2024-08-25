@@ -49,6 +49,40 @@ export class PlayerController {
         }
     }
 
+
+    public async setSelectedPlayer(req: Request, res: Response) {
+        try {
+            const previousSelectedPlayer = await playerRepositoryMethods.getSelectedPlayer(req.params.discordId);
+            if (previousSelectedPlayer) {
+                previousSelectedPlayer.selected = "NO";
+                await playerRepositoryMethods.updatePlayer(previousSelectedPlayer);
+            }
+            const player = await playerRepositoryMethods.getById(parseInt(req.params.id));
+            if (!player) {
+                return res.status(404).send("Player not found.");
+            } else if (player.discordId !== req.params.discordId) {
+                return res.status(403).send("Player does not match discordId.");
+            }
+            player.selected = "YES";
+            await playerRepositoryMethods.updatePlayer(player);
+            return res.status(200).send("Selected player updated successfully.");
+        } catch (error) {
+            console.error("Failed to remove previous selected player:", error);
+            return res.status(500).send("An error occurred while removing previous selected player.");
+        }
+    }
+
+    //geAllPlayers by discordId
+    public async getAllPlayersByDiscordId(req: Request, res: Response) {
+        try {
+            const players = await playerRepositoryMethods.getAllPlayersByDiscordId(req.params.discordId);
+            return res.status(200).send(players);
+        } catch (error) {
+            console.error("Failed to fetch players:", error);
+            return res.status(500).send("An error occurred while fetching players.");
+        }
+    }
+
     /*public async createPlayer(req: Request, res: Response) {
         try {
             const player: Player = await playerRepositoryMethods.create(req.body);
@@ -138,6 +172,39 @@ export class PlayerController {
         }
     }
     
+    public async updatePlayerAvatar(req: Request, res: Response) {
+        try {
+            const playerId = parseInt(req.params.id);
+            const playerRepository = AppDataSource.getRepository(Player);
+
+            // Find the player by ID
+            const player = await playerRepository.findOne({ where: { id: playerId } });
+
+            if (!player) {
+                return res.status(404).send('Player not found.');
+            }
+
+            // Check if the file is uploaded
+            if (!req.file) {
+                return res.status(400).send('No file uploaded.');
+            }
+
+            // Get the filename of the uploaded file
+            const avatarFilename = req.file.filename;
+
+            // Update the player's avatar field with the filename (or full path if needed)
+            player.avatar = avatarFilename;
+
+            // Save the updated player entity
+            await playerRepository.save(player);
+
+            return res.status(200).send('Player avatar updated successfully.');
+        } catch (error) {
+            console.error('Failed to update player avatar:', error);
+            return res.status(500).send('An error occurred while updating the player avatar.');
+        }
+    }
+
     public async deletePlayerAndRelations(req: Request, res: Response) {
         const playerId = parseInt(req.params.id);
         const queryRunner = AppDataSource.createQueryRunner();

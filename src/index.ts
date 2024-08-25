@@ -16,6 +16,7 @@ const talentsRoutes = require('./routes/TalentsRoutes');
 const statsRoutes = require('./routes/StatsRoutes');
 
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 app.use("/player", playerRoutes);
 app.use("/item", itemRoutes);
 app.use("/weapon", weaponRoutes);
