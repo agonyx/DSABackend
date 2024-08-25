@@ -18,7 +18,7 @@ export const statsRepositoryMethods = {
         return await statsRepository.save(stats);
     },
     async updateStats(stats: Stats) {
-        return await statsRepository.save(stats);
+        return await statsRepository.update(stats.id, stats);
     },
     async deleteStats(id: number) {
         return await statsRepository.delete(id);

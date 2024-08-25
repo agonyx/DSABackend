@@ -39,9 +39,14 @@ export class StatsController {
 
     public async updateStats(req: Request, res: Response) {
         try {
+            const savedStats = await statsRepositoryMethods.getById(parseInt(req.params.id));
+            if (!savedStats) {
+                return res.status(404).send("Stats not found.");
+            }
+
             const stats = await statsRepositoryMethods.create(req.body);
-            const savedStats = await statsRepositoryMethods.updateStats(stats);
-            return res.status(200).send(savedStats);
+            const savedStatsNEW = await statsRepositoryMethods.updateStats(stats);
+            return res.status(200).send(savedStatsNEW);
         } catch (error) {
             console.error("Failed to update stats:", error);
             return res.status(500).send("An error occurred while updating stats.");

@@ -6,7 +6,7 @@ const router = Router();
 router.get("/", statsController.getAll);
 router.get("/:id", statsController.getById);
 router.post("/", statsController.createStats);
-router.put("/", statsController.updateStats);
+router.put("/:id", statsController.updateStats);
 router.delete("/:id", statsController.deleteStats);
 
 
