@@ -14,6 +14,9 @@ const weaponRoutes = require('./routes/WeaponRoutes');
 const playertalentsRoutes = require('./routes/PlayerTalentsRoutes');
 const talentsRoutes = require('./routes/TalentsRoutes');
 const statsRoutes = require('./routes/StatsRoutes');
+const combatSessionRoutes = require('./routes/CombatSessionRoutes');
+const combatantRoutes = require('./routes/CombatantRoutes');
+const mobRoutes = require('./routes/MobRoutes');
 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
@@ -23,6 +26,9 @@ app.use("/weapon", weaponRoutes);
 app.use("/playertalents", playertalentsRoutes);
 app.use("/talents", talentsRoutes);
 app.use("/stats", statsRoutes);
+app.use("/combatSession", combatSessionRoutes);
+app.use("/combatant", combatantRoutes);
+app.use("/mob", mobRoutes);
 
 
 const server = app.listen(port, () => {
