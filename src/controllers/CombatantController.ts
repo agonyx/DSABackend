@@ -41,22 +41,26 @@ export class CombatantController {
         if (!session) { return res.status(404).send(`Combat session with ID ${sessionId} not found.`); }
         if (session.state !== CombatState.SETUP) { return res.status(400).send("Can only add combatants to sessions in SETUP state."); }
 
-        // ---=== CHECK FOR DUPLICATE PLAYER ===---
-        if (type === CombatantType.PLAYER && playerId) {
-            console.log(`Checking if player ${playerId} is already in session ${sessionId}`);
-            const existingCombatant = await combatantRepositoryMethods.findBySessionAndPlayer(sessionId, playerId);
+        // ---=== ADJUSTED CHECK: Check for DUPLICATE DISCORD USER ===---
+        // If adding a PLAYER, check if this discordUserId already has a character in this session
+        if (type === CombatantType.PLAYER && discordUserId) { // Check based on discordUserId
+            console.log(`Checking if discord user ${discordUserId} is already in session ${sessionId}`);
+            // Use the repository method that finds by discordUserId and sessionId
+            const existingCombatant = await combatantRepositoryMethods.findBySessionAndDiscordUser(sessionId, discordUserId);
             if (existingCombatant) {
-                console.log(`Player ${playerId} already in session ${sessionId}. Preventing duplicate join.`);
+                // A combatant entry for this user already exists in this session
+                console.log(`Discord user ${discordUserId} already has character ${existingCombatant.name} (Combatant ID: ${existingCombatant.id}) in session ${sessionId}. Preventing duplicate join.`);
                 // Return 409 Conflict status code
-                return res.status(409).send(`Character is already participating in this combat session.`);
+                return res.status(409).send(`You already have a character (${existingCombatant.name}) participating in this combat session.`);
             }
-            console.log(`Player ${playerId} not found in session ${sessionId}. Proceeding to add.`);
+            console.log(`Discord user ${discordUserId} not found in session ${sessionId}. Proceeding to add.`);
         }
-        // ---=== END DUPLICATE CHECK ===---
+        // ---=== END ADJUSTED CHECK ===---
 
         // Prepare and save the new combatant if check passes
         const combatantData: Partial<Combatant> = {
-            sessionId, type, allegiance, playerId: type === CombatantType.PLAYER ? playerId : null,
+            sessionId, type, allegiance,
+            playerId: type === CombatantType.PLAYER ? playerId : null,
             mobDefinitionId: type === CombatantType.NPC ? mobDefinitionId : null,
             discordUserId: type === CombatantType.PLAYER ? discordUserId : null,
             name, maxHP, currentHP, initiativeBase,
@@ -64,16 +68,47 @@ export class CombatantController {
         const combatant = await combatantRepositoryMethods.create(combatantData);
         const savedCombatant = await combatantRepositoryMethods.save(combatant);
 
+        // Return the newly created combatant object
         return res.status(201).json(savedCombatant);
 
     } catch (error: unknown) {
         console.error("Raw error creating combatant:", error);
         let message = "An error occurred while creating the combatant.";
         if (error instanceof Error) message = error.message;
+        // Consider more specific error codes if possible (e.g., foreign key violation)
+        return res.status(500).send(message);
+    }
+}/**
+     * Gets a specific combatant within a session based on the Discord User ID.
+     * Used by the bot to find which combatant belongs to a user trying to leave.
+     * GET /combatant/session/:sessionId/user/:discordId
+     */
+async getBySessionAndUser(req: Request, res: Response) {
+    try {
+        const { sessionId, discordId } = req.params;
+
+        if (!sessionId || !discordId) {
+            return res.status(400).send("sessionId and discordId parameters are required.");
+        }
+
+        console.log(`Controller: Handling getBySessionAndUser for session ${sessionId}, user ${discordId}`);
+        const combatant = await combatantRepositoryMethods.findBySessionAndDiscordUser(sessionId, discordId);
+
+        if (!combatant) {
+            // It's valid not to find one if the user hasn't joined
+            return res.status(404).send("Combatant not found for this user in this session.");
+        }
+
+        // Return the found combatant data
+        return res.status(200).json(combatant);
+
+    } catch (error: unknown) {
+        console.error("Raw error in getBySessionAndUser:", error);
+        let message = "An error occurred while fetching the combatant by user and session.";
+        if (error instanceof Error) message = error.message;
         return res.status(500).send(message);
     }
 }
-
     /**
      * Gets all combatants for a given session
      */

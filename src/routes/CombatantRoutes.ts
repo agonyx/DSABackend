@@ -16,5 +16,5 @@ router.put("/:id", combatantController.update);
 
 // Delete a combatant by its UUID (called by /removecombatant)
 router.delete("/:id", combatantController.delete);
-
+router.get("/session/:sessionId/user/:discordId", combatantController.getBySessionAndUser);
 module.exports = router;

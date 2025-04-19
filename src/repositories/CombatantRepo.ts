@@ -8,6 +8,15 @@ export const combatantRepositoryMethods = {
         return combatantRepository.create(combatantData);
     },
 
+    async findBySessionAndDiscordUser(sessionId: string, discordUserId: string): Promise<Combatant | null> {
+        return combatantRepository.findOne({
+           where: {
+               sessionId: sessionId,
+               discordUserId: discordUserId
+               // No need to check type: 'PLAYER' here, as only players have discordUserId
+           }
+       });
+   },
     async save(combatant: Combatant): Promise<Combatant> {
         return combatantRepository.save(combatant);
     },
