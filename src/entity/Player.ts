@@ -5,6 +5,7 @@ import { PlayerTalents } from "./PlayerTalents";
 import { Weapon } from "./Weapon";
 import { AppDataSource } from "../data-source";
 import { Item } from "./Item";
+import { PlayerActionModification } from "./PlayerActionModification";
 
 @Entity()
 export class Player {
@@ -24,6 +25,9 @@ export class Player {
 
     @OneToMany(() => PlayerTalents, playerTalents => playerTalents.player)
     talents: PlayerTalents[];
+
+    @OneToMany(() => PlayerActionModification, playerActionModification => playerActionModification.player)
+    playerActionModifications: PlayerActionModification[];
 
     @OneToMany(() => Weapon, weapon => weapon.player)
     weapons: Weapon[];

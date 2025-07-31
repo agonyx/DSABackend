@@ -29,7 +29,21 @@ export const itemRepositoryMethods = {
             }
         );
     },
-    async createItem(item: Item) {
+    async createItem(itemData: Partial<Item>) {
+        if (!itemData.player || !itemData.player.id) {
+            throw new Error("Player ID is required to create an item.");
+        }
+
+        const player = await AppDataSource.getRepository("Player").findOneBy({ id: itemData.player.id });
+        if (!player) {
+            throw new Error(`Player with ID ${itemData.player.id} not found.`);
+        }
+
+        const item = itemRepository.create({
+            ...itemData,
+            player,
+        });
+        
         return await itemRepository.save(item);
     },
     async updateItem(item: Item) {

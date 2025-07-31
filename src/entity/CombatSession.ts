@@ -5,6 +5,7 @@ import { Combatant } from './Combatant'; // Adjust path as needed
 export enum CombatState {
     SETUP = 'SETUP',
     RUNNING = 'RUNNING',
+    PAUSED = 'PAUSED',
     ENDED = 'ENDED',
 }
 

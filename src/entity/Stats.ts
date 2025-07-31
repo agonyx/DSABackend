@@ -43,5 +43,8 @@ export class Stats {
     initiative: number;
 
     @Column({ type: "int", default: 0 })
+    ruestungsschutz: number;
+
+    @Column({ type: "int", default: 0 })
     ausweichen: number;
 }

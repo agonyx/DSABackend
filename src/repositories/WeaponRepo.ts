@@ -38,7 +38,21 @@ export const weaponRepositoryMethods = {
             .andWhere("weapon.isEquipped = :isEquipped", { isEquipped: "Y" })
             .getMany();
     },
-    async createWeapon(weapon: Weapon) {
+    async createWeapon(weaponData: Partial<Weapon>) {
+        if (!weaponData.player || !weaponData.player.id) {
+            throw new Error("Player ID is required to create a weapon.");
+        }
+
+        const player = await AppDataSource.getRepository("Player").findOneBy({ id: weaponData.player.id });
+        if (!player) {
+            throw new Error(`Player with ID ${weaponData.player.id} not found.`);
+        }
+
+        const weapon = weaponRepository.create({
+            ...weaponData,
+            player,
+        });
+
         return await weaponRepository.save(weapon);
     },
     async updateWeapon(weapon: Weapon) {

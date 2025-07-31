@@ -13,6 +13,9 @@ router.get("/:id", combatSessionController.getById);
 // Get active session for a channel (useful for bot checking context)
 router.get("/channel/:channelId/active", combatSessionController.getActiveByChannelId);
 
+// Get any session for a channel (useful for bot checking context)
+router.get("/channel/:channelId", combatSessionController.getByChannelId);
+
 // Update session (e.g., set messageId, add log entry)
 router.put("/:id", combatSessionController.update);
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import playerController from "../controllers/PlayerController";
+import playerActionModificationController from "../controllers/PlayerActionModificationController";
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,6 +24,8 @@ router.get("/", playerController.getAll);
 
 /*params: id*/
 router.get("/:id", playerController.getById);
+
+router.get("/:playerId/action-modifications", playerActionModificationController.getSkillsForPlayer);
 
 router.get("/discord/:discordId", playerController.getAllPlayersByDiscordId);
 

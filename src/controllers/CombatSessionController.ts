@@ -87,49 +87,144 @@ export class CombatSessionController {
     }
 
     /**
-     * Updates specific fields of a session (e.g., messageId after bot sends message)
-     * Expects fields to update in body, e.g., { messageId: string } or { combatLogEntry: string }
+     * Gets all sessions for a channel, optionally filtering by state.
+     * Used by /resumecombat to find PAUSED sessions.
      */
-    async update(req: Request, res: Response) {
+    async getByChannelId(req: Request, res: Response) {
         try {
-            const id = req.params.id;
-            if (!id) return res.status(400).send("Session ID parameter is required.");
+            const channelId = req.params.channelId;
+            if (!channelId) return res.status(400).send("Channel ID parameter is required.");
 
-            const session = await combatSessionRepositoryMethods.findById(id);
-            if (!session) {
-                return res.status(404).send("Combat session not found.");
+            // Check for optional 'state' query parameter
+            const state = req.query.state as CombatState;
+            if (state && !Object.values(CombatState).includes(state)) {
+                return res.status(400).send(`Invalid state value provided: ${state}`);
             }
-             if (session.state === CombatState.ENDED) {
-                return res.status(400).send("Cannot update an ended combat session.");
-             }
 
-            const { messageId, combatLogEntry } = req.body;
+            const sessions = await combatSessionRepositoryMethods.findAllByChannelId(channelId, state);
 
-            let updated = false;
-            if (messageId !== undefined) {
-                session.messageId = messageId;
-                updated = true;
-            }
-             if (combatLogEntry !== undefined && typeof combatLogEntry === 'string') {
-                session.combatLog = [...session.combatLog, combatLogEntry]; // Append log entry
-                 updated = true;
-            }
-            // Add other updatable fields as needed (e.g., currentTurnIndex IF handled via direct PUT)
-
-            if (updated) {
-                const savedSession = await combatSessionRepositoryMethods.save(session);
-                return res.status(200).json(savedSession);
-            } else {
-                 return res.status(400).send("No updatable fields provided in request body.");
-            }
+            // Note: find returns an array. If no sessions are found, it's an empty array, not null.
+            // The bot expects a 404 if nothing is found, but for a query, an empty array is more correct.
+            // The bot handles an empty array gracefully, so we can just return it.
+            return res.status(200).json(sessions);
 
         } catch (error: unknown) {
-            console.error("Raw error updating combat session:", error);
-            let message = "An error occurred while updating the session.";
+            console.error("Raw error fetching sessions by Channel ID:", error);
+            let message = "An error occurred while fetching sessions.";
             if (error instanceof Error) message = error.message;
             return res.status(500).send(message);
         }
     }
+
+    /**
+    * Updates specific fields of a session.
+    * Handles 'messageId' for linking the Discord message.
+    * Handles 'currentTurnIndex' for saving turn progression.
+    * Handles 'combatLogEntry' to append a new line to the session's log.
+    * Expects fields to update in the request body.
+    */
+   async update(req: Request, res: Response) {
+       try {
+           const id = req.params.id; // Session UUID
+           if (!id) {
+               return res.status(400).send("Session ID parameter is required.");
+           }
+
+           // Fetch the existing session - we need its current state, especially the log
+           const session = await combatSessionRepositoryMethods.findById(id); // Assuming findById exists
+           if (!session) {
+               return res.status(404).send("Combat session not found.");
+           }
+
+           // Optional: Prevent updates to already ended sessions?
+           // if (session.state === CombatState.ENDED) {
+           //     return res.status(400).send("Cannot update an ended combat session.");
+           // }
+
+           const updateData = req.body; // Get potential fields from request body
+           let updated = false; // Flag to track if any changes were made
+
+           // --- Update Message ID ---
+           if (updateData.messageId !== undefined) {
+                // Basic validation - could add more checks (is it a valid snowflake?)
+                if (typeof updateData.messageId === 'string' || updateData.messageId === null) {
+                   session.messageId = updateData.messageId;
+                   console.log(`[Session Update ${id}] Setting messageId to ${session.messageId}`);
+                   updated = true;
+                } else {
+                    console.warn(`[Session Update ${id}] Received invalid type for messageId: ${typeof updateData.messageId}`);
+                }
+           }
+
+           // --- Update Current Turn Index ---
+           // (Called by nextTurn maybe, or other logic)
+            if (updateData.currentTurnIndex !== undefined) {
+                const newIndex = parseInt(updateData.currentTurnIndex, 10); // Ensure it's a number
+                if (Number.isInteger(newIndex) && newIndex >= -1) { // Allow -1 if combat ends? Or just >= 0
+                    session.currentTurnIndex = newIndex;
+                    console.log(`[Session Update ${id}] Setting currentTurnIndex to ${session.currentTurnIndex}`);
+                    updated = true;
+                } else {
+                     console.warn(`[Session Update ${id}] Received invalid value for currentTurnIndex: ${updateData.currentTurnIndex}`);
+                }
+            }
+
+           // --- Append Combat Log Entry ---
+           if (updateData.combatLogEntry !== undefined) {
+               if (typeof updateData.combatLogEntry === 'string' && updateData.combatLogEntry.trim().length > 0) {
+                   // Ensure the combatLog array exists and is an array
+                   if (!session.combatLog || !Array.isArray(session.combatLog)) {
+                       session.combatLog = [];
+                   }
+                   // Append the new entry
+                   session.combatLog.push(updateData.combatLogEntry.trim());
+                   console.log(`[Session Update ${id}] Appended log entry. New length: ${session.combatLog.length}`);
+
+                   // Optional: Trim the persisted log in the database
+                   const MAX_DB_LOG_LENGTH = 50; // Example limit
+                    if(session.combatLog.length > MAX_DB_LOG_LENGTH) {
+                         session.combatLog = session.combatLog.slice(-MAX_DB_LOG_LENGTH);
+                         console.log(`[Session Update ${id}] Trimmed DB log to ${MAX_DB_LOG_LENGTH} entries.`);
+                    }
+                   updated = true;
+
+               } else {
+                   console.warn(`[Session Update ${id}] Received invalid or empty combatLogEntry.`);
+               }
+           }
+
+           // --- Update State (e.g., to ENDED) ---
+            if (updateData.state !== undefined) {
+                 if (Object.values(CombatState).includes(updateData.state)) {
+                     session.state = updateData.state;
+                     console.log(`[Session Update ${id}] Setting state to ${session.state}`);
+                     updated = true;
+                 } else {
+                      console.warn(`[Session Update ${id}] Received invalid value for state: ${updateData.state}`);
+                 }
+            }
+
+
+           // Add other updatable fields here if needed
+
+
+           // --- Save if changes were made ---
+           if (updated) {
+               const savedSession = await combatSessionRepositoryMethods.save(session); // Save the modified session object
+               console.log(`[Session Update ${id}] Session saved successfully.`);
+               return res.status(200).json(savedSession); // Return updated session
+           } else {
+               // If no valid fields were provided for update
+               return res.status(400).send("No valid or recognized fields provided for update.");
+           }
+
+       } catch (error: unknown) {
+           console.error(`Raw error updating combat session ${req.params.id}:`, error);
+           let message = "An error occurred while updating the session.";
+           if (error instanceof Error) message = error.message;
+           return res.status(500).send(message);
+       }
+   }
 
     /**
      * Starts the combat (triggered by Start Fight button)

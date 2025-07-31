@@ -29,13 +29,13 @@ export class ItemController {
 
     public async createItem(req: Request, res: Response) {
         try {
-            const item: Item = await itemRepositoryMethods.create(req.body);
-
-            const savedItem = await itemRepositoryMethods.createItem(item);
-
+            const savedItem = await itemRepositoryMethods.createItem(req.body);
             return res.status(201).send(savedItem);
         } catch (error) {
             console.error("Failed to create item:", error);
+            if (error instanceof Error) {
+                return res.status(400).send(error.message);
+            }
             return res.status(500).send("An error occurred while creating item.");
         }
     }

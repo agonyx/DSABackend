@@ -34,10 +34,14 @@ export const combatSessionRepositoryMethods = {
         });
     },
 
-     // Find *any* session in a specific channel (e.g., for cleanup)
-    async findByChannelId(channelId: string): Promise<CombatSession | null> {
-        return combatSessionRepository.findOne({
-            where: { channelId: channelId },
+     // Find all sessions in a specific channel, optionally filtering by state
+    async findAllByChannelId(channelId: string, state?: CombatState): Promise<CombatSession[]> {
+        const whereClause: any = { channelId };
+        if (state) {
+            whereClause.state = state;
+        }
+        return combatSessionRepository.find({
+            where: whereClause,
             relations: ["combatants"],
         });
     },

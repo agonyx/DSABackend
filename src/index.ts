@@ -3,6 +3,7 @@ import express from 'express';
 import * as fs from "fs";
 import * as path from "path";
 import { Talents } from "./entity/Talents";
+import { ActionModification } from "./entity/ActionModification";
 
 const app = express();
 const port = 3000;
@@ -17,6 +18,8 @@ const statsRoutes = require('./routes/StatsRoutes');
 const combatSessionRoutes = require('./routes/CombatSessionRoutes');
 const combatantRoutes = require('./routes/CombatantRoutes');
 const mobRoutes = require('./routes/MobRoutes');
+const actionModificationRoutes = require('./routes/ActionModificationRoutes');
+const playerActionModificationRoutes = require('./routes/PlayerActionModificationRoutes');
 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
@@ -29,6 +32,8 @@ app.use("/stats", statsRoutes);
 app.use("/combatSession", combatSessionRoutes);
 app.use("/combatant", combatantRoutes);
 app.use("/mob", mobRoutes);
+app.use("/action-modification", actionModificationRoutes);
+app.use("/player-action-modification", playerActionModificationRoutes);
 
 
 const server = app.listen(port, () => {
@@ -43,6 +48,9 @@ const server = app.listen(port, () => {
             console.log(`[Database Seeding]: Starting to seed talents`)
             await seedTalents();
             console.log(`[Database Seeding]: Finished seeding talents`)
+            console.log(`[Database Seeding]: Starting to seed action modifications`)
+            await seedActionModifications();
+            console.log(`[Database Seeding]: Finished seeding action modifications`)
         }
         server.emit("appStarted");
     }).catch(error => console.log(error));
@@ -70,6 +78,23 @@ const formatDuration = (ms: any) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = ((ms % 60000) / 1000).toFixed(2);
     return `${minutes} minutes and ${seconds} seconds`;
+};
+
+const seedActionModifications = async () => {
+    const data = fs.readFileSync(path.join(__dirname, 'action_modifications.json'), 'utf8');
+    const actionModificationsData = JSON.parse(data);
+    const actionModificationRepository = AppDataSource.getRepository(ActionModification);
+
+    const existingCount = await actionModificationRepository.count();
+    if (existingCount > 0) {
+        console.log(`[Database Seeding]: Skipping seeding for ActionModifications, table already contains data`);
+        return;
+    }
+
+    for (const actionModificationData of actionModificationsData) {
+        var actionModification = actionModificationRepository.create(actionModificationData);
+        await actionModificationRepository.save(actionModification);
+    }
 };
 
 module.exports = server;

@@ -38,13 +38,13 @@ export class WeaponController {
 
     public async createWeapon(req: Request, res: Response) {
         try {
-            const weapon = await weaponRepositoryMethods.create(req.body);
-
-            const savedWeapon = await weaponRepositoryMethods.createWeapon(weapon);
-
+            const savedWeapon = await weaponRepositoryMethods.createWeapon(req.body);
             return res.status(201).send(savedWeapon);
         } catch (error) {
             console.error("Failed to create weapon:", error);
+            if (error instanceof Error) {
+                return res.status(400).send(error.message);
+            }
             return res.status(500).send("An error occurred while creating weapon.");
         }
     }

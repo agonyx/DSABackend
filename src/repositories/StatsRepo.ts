@@ -14,15 +14,14 @@ export const statsRepositoryMethods = {
             }
         );
     },
-    async createStats(stats: Stats) {
+    async save(stats: Stats) {
         return await statsRepository.save(stats);
     },
-    async updateStats(stats: Stats) {
-        return await statsRepository.update(stats.id, stats);
-    },
+
     async deleteStats(id: number) {
         return await statsRepository.delete(id);
     },
+
     async create(stats: Partial<Stats>) {
         return statsRepository.create(stats);
     }

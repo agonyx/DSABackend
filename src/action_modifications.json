@@ -1,0 +1,30 @@
+[
+    {
+        "name": "Wuchtschlag",
+        "description": "Erschwert die AT, um den Schaden zu erhöhen.",
+        "actionType": "MELEE",
+        "prerequisites": {
+            "technique": "Hiebwaffen",
+            "value": 10
+        },
+        "rules": {
+            "type": "power_attack",
+            "at_modifier": -2,
+            "damage_bonus": 2
+        }
+    },
+    {
+        "name": "Finte",
+        "description": "Erschwert die AT, um die PA des Gegners zu erschweren.",
+        "actionType": "MELEE",
+        "prerequisites": {
+            "technique": "Hiebwaffen",
+            "value": 12
+        },
+        "rules": {
+            "type": "feint",
+            "at_modifier": -2,
+            "opponent_pa_modifier": -2
+        }
+    }
+]
