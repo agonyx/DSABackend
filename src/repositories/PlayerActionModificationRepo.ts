@@ -21,5 +21,13 @@ export const playerActionModificationRepoMethods = {
             relations: ["actionModification"],
         });
         return assignments.map(assignment => assignment.actionModification);
+    },
+
+    async unassignSkillFromPlayer(playerId: string, skillId: string): Promise<boolean> {
+        const result = await playerActionModificationRepository.delete({
+            playerId: playerId,
+            actionModificationId: skillId,
+        });
+        return result.affected !== 0;
     }
 };

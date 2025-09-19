@@ -12,4 +12,8 @@ export const actionModificationRepoMethods = {
     async findAll(): Promise<ActionModification[]> {
         return actionModificationRepository.find();
     },
+
+    async findById(id: string): Promise<ActionModification | null> {
+        return actionModificationRepository.findOne({ where: { id } });
+    }
 };

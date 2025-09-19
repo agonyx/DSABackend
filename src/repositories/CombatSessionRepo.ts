@@ -46,6 +46,16 @@ export const combatSessionRepositoryMethods = {
         });
     },
 
+    async findActiveOrPaused(): Promise<CombatSession[]> {
+        return combatSessionRepository.find({
+            where: [
+                { state: CombatState.RUNNING },
+                { state: CombatState.PAUSED },
+            ],
+            relations: ["combatants"],
+        });
+    },
+
     async delete(id: string): Promise<boolean> {
         // Note: Deleting a session might require cleanup of related Combatants
         // depending on cascade settings or if you want manual control.

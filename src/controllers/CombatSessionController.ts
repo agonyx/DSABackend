@@ -44,6 +44,18 @@ export class CombatSessionController {
         }
     }
 
+    async getActiveSessions(req: Request, res: Response) {
+        try {
+            const sessions = await combatSessionRepositoryMethods.findActiveOrPaused();
+            res.status(200).json(sessions);
+        } catch (error: unknown) {
+            console.error("Raw error fetching all active/paused sessions:", error);
+            let message = "An error occurred while fetching active sessions.";
+            if (error instanceof Error) message = error.message;
+            return res.status(500).send(message);
+        }
+    }
+
     /**
      * Gets a specific combat session by ID (useful for bot to refresh state)
      * Loads combatants relation by default here.

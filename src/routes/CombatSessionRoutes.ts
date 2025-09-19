@@ -7,6 +7,9 @@ const router = Router();
 // Create a new session (called by /startcombat)
 router.post("/", combatSessionController.create);
 
+// Get all active/paused sessions (for bot restart recovery)
+router.get("/active", combatSessionController.getActiveSessions);
+
 // Get session by UUID (useful for bot refreshing state)
 router.get("/:id", combatSessionController.getById);
 

@@ -40,6 +40,28 @@ export class PlayerActionModificationController {
         }
     }
 
+    async unassignSkill(req: Request, res: Response) {
+        try {
+            const { playerId, skillId } = req.body;
+            if (!playerId || !skillId) {
+                return res.status(400).send("playerId and skillId are required.");
+            }
+
+            const success = await playerActionModificationRepoMethods.unassignSkillFromPlayer(playerId, skillId);
+
+            if (success) {
+                return res.status(204).send(); // Success, no content
+            } else {
+                return res.status(404).send("Assignment not found or already deleted.");
+            }
+
+        } catch (error: unknown) {
+            let message = "An error occurred while unassigning the skill.";
+            if (error instanceof Error) message = error.message;
+            return res.status(500).send(message);
+        }
+    }
+
     async getSkillsForPlayer(req: Request, res: Response) {
         try {
             const playerId = req.params.playerId;

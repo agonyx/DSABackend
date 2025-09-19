@@ -5,5 +5,6 @@ import playerActionModificationController from '../controllers/PlayerActionModif
 const router = Router();
 
 router.post('/assign', playerActionModificationController.assignSkill);
+router.delete('/unassign', playerActionModificationController.unassignSkill);
 
 module.exports = router;
